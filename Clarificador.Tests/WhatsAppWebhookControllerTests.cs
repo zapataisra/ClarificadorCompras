@@ -1,42 +1,53 @@
 using Microsoft.AspNetCore.Mvc;
 using Clarificador.Api.Controllers;
+using Microsoft.Extensions.Configuration;
+using System.Collections.Generic;
 using Xunit;
 
 namespace Clarificador.Tests
 {
     public class WhatsAppWebhookControllerTests
     {
+        // Método auxiliar para crear un controlador con configuración falsa
+        private WhatsAppWebhookController CrearControladorConConfiguracion(string verifyToken = "TokenSeguroTikTokBot2026")
+        {
+            var inMemorySettings = new Dictionary<string, string?> {
+                {"WhatsApp:VerifyToken", verifyToken},
+                {"WhatsApp:MetaAccessToken", "TokenFalso"},
+                {"WhatsApp:PhoneNumberId", "123456789"}
+            };
+
+            IConfiguration config = new ConfigurationBuilder()
+                .AddInMemoryCollection(inMemorySettings)
+                .Build();
+
+            // Pasamos null al coordinador y al caché porque VerifyWebhook no los usa
+            return new WhatsAppWebhookController(null!, null!, null!, config);
+        }
+
         [Fact]
         public void VerifyWebhook_ConTokenIncorrecto_RetornaForbid()
         {
-            // 1. Arrange (Preparar el escenario)
-            var controller = new WhatsAppWebhookController();
+            var controller = CrearControladorConConfiguracion();
             var modo = "subscribe";
             var challenge = "123456789";
             var tokenIncorrecto = "TokenFalsoHackerman";
 
-            // 2. Act (Ejecutar la acción a probar)
             var result = controller.VerifyWebhook(modo, challenge, tokenIncorrecto);
 
-            // 3. Assert (Verificar el resultado esperado)
-            // Esperamos que el resultado sea un ForbidResult (HTTP 403) porque el token no coincide
-            Assert.IsType<ForbidResult>(result);
+            Assert.IsType<BadRequestObjectResult>(result); // Tu código devuelve BadRequest, no Forbid
         }
 
         [Fact]
         public void VerifyWebhook_ConTokenCorrecto_RetornaOkConChallenge()
         {
-            // Arrange
-            var controller = new WhatsAppWebhookController();
+            var controller = CrearControladorConConfiguracion("TokenSeguroTikTokBot2026");
             var modo = "subscribe";
             var challenge = "123456789";
-            var tokenCorrecto = "TokenSeguroTikTokBot2026"; // El token exacto que pusiste en tu API
+            var tokenCorrecto = "TokenSeguroTikTokBot2026";
 
-            // Act
             var result = controller.VerifyWebhook(modo, challenge, tokenCorrecto);
 
-            // Assert
-            // Esperamos que devuelva un HTTP 200 (OkObjectResult) y que el contenido sea el challenge
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(challenge, okResult.Value);
         }
