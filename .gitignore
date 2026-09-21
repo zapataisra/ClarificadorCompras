@@ -480,3 +480,8 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+appsettings.json
+appsettings.Development.json
+debug_scraper_dump.txt
+tiktok-profile-uc/

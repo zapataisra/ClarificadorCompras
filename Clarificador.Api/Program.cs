@@ -1,7 +1,14 @@
-using Clarificador.Api.Data;
+using Clarificador.Api.Models;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddScoped<Clarificador.Api.Services.TikTokScraperService>();
+builder.Services.AddMemoryCache();
+builder.Services.AddHttpClient<Clarificador.Api.Services.DeepSeekService>();
+builder.Services.AddScoped<Clarificador.Api.Services.TikTokScraperService>();
+builder.Services.AddSingleton<Clarificador.Api.Services.ScrapingCoordinator>(); // Singleton, no Scoped
+
 
 // 1. Obtener la cadena de conexión
 var connectionString = builder.Configuration.GetConnectionString("HostingerMySql");
@@ -22,7 +29,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
 
